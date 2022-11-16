@@ -2,7 +2,10 @@ package kr.ac.kumoh.s20200607.w1102volleyviewmodel
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.widget.ArrayAdapter
 import android.widget.Toast
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonObjectRequest
@@ -11,7 +14,8 @@ import kr.ac.kumoh.s20200607.w1102volleyviewmodel.databinding.ActivityMainBindin
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
-    private lateinit var queue: RequestQueue
+    private lateinit var model: SongViewModel
+    private var songs: Array<String>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -20,23 +24,17 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        queue = Volley.newRequestQueue(application)
-        binding.btnConnect.setOnClickListener {
-            val url = "https://yts.torrentbay.to/api/v2/list_movies.json?sort=rating&limit=30"
-            val request = JsonObjectRequest(
-                Request.Method.GET,
-                url,
-                null,
-                {
-                    //처리가 잘 됐을 때 call-back 함수
-                    Toast.makeText(application, it.toString(), Toast.LENGTH_LONG).show()
-                },
-                {
-                    //에러가 났을 때 호출되는 함수
-                    Toast.makeText(application, it.toString(), Toast.LENGTH_LONG).show()
-                }
-            )
-            queue.add(request)
-        }
+        model = ViewModelProvider(this)[SongViewModel::class.java] // this: context
+        /**
+         * [songViewModel] 해시맵으로 생각함
+         * get...Model 대신 사용
+         */
+        model.requestSong()
+
+        model.songs.observe(this, Observer<ArrayList<String>> {
+            songs = model.songs.value?.toTypedArray()
+            binding.listSongs.adapter = ArrayAdapter<String> (this, android.R.layout.simple_list_item_1, songs as Array<out String>)
+        })
+
     }
 }
